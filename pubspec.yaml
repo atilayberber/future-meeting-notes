@@ -16,7 +16,7 @@ dependencies:
   path: ^1.9.0
   shared_preferences: ^2.3.2
   uuid: ^4.5.1
-  file_picker: ^8.1.2
+  file_picker: ^10.3.0
   wakelock_plus: ^1.2.8
   sherpa_onnx: ^1.13.8
 
