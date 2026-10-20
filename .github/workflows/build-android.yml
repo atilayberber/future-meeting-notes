@@ -27,11 +27,19 @@ jobs:
           channel: stable
           cache: true
 
+      - name: Makinedeki NDK'yı seç
+        run: |
+          ls "$ANDROID_HOME/ndk" || true
+          NDK=$(ls "$ANDROID_HOME/ndk" | sort -V | tail -1)
+          echo "Kullanılacak NDK: $NDK"
+          echo "ANDROID_NDK_VERSION=$NDK" >> "$GITHUB_ENV"
+
       - name: Platform klasörlerini oluştur
         run: |
           flutter create --org com.bicen --project-name future_meeting_notes --platforms android,ios .
           rm -f test/widget_test.dart
           python3 scripts/setup_platforms.py
+          grep -n "ndkVersion\|minSdk" android/app/build.gradle* || true
 
       - name: Paketler
         run: flutter pub get
@@ -58,6 +66,8 @@ jobs:
             echo "commit: $GITHUB_SHA"
             echo "build: ${{ steps.build.outcome }}"
             echo "flutter: $(flutter --version | head -1)"
+            echo "ndk: $ANDROID_NDK_VERSION"
+            grep -n "ndkVersion\|minSdk" android/app/build.gradle* || true
           } > /tmp/out/STATUS.txt
           [ -f build.log ] && tail -n 400 build.log > /tmp/out/build.log || true
           [ -f build/app/outputs/flutter-apk/app-release.apk ] && \

@@ -3,6 +3,7 @@ minimum sürümleri ayarlar. kurulum.ps1'in yaptığının aynısı; CI'da (GitH
 
 Kullanım: proje kökünde  python3 scripts/setup_platforms.py
 """
+import os
 import pathlib
 import re
 
@@ -19,13 +20,19 @@ if perms:
     xml = re.sub(r"(<manifest[^>]*>)", lambda m: m.group(1) + perms, xml, count=1)
     manifest.write_text(xml, encoding="utf-8")
 
-# --- Android minSdk 24
+# --- Android minSdk 24 (+ isteğe bağlı sabit NDK sürümü)
+# ANDROID_NDK_VERSION verilirse (CI'da makinede kurulu olan sürüm) o kullanılır;
+# böylece Gradle derleme sırasında NDK indirmeye çalışmaz.
+ndk = os.environ.get("ANDROID_NDK_VERSION", "").strip()
 for name in ("android/app/build.gradle.kts", "android/app/build.gradle"):
     f = root / name
     if f.exists():
         t = f.read_text(encoding="utf-8")
         t = re.sub(r"minSdk\s*=\s*flutter\.minSdkVersion", "minSdk = 24", t)
         t = re.sub(r"minSdkVersion\s+flutter\.minSdkVersion", "minSdkVersion 24", t)
+        if ndk:
+            t = re.sub(r"ndkVersion\s*=\s*flutter\.ndkVersion", f'ndkVersion = "{ndk}"', t)
+            t = re.sub(r"ndkVersion\s+flutter\.ndkVersion", f'ndkVersion "{ndk}"', t)
         f.write_text(t, encoding="utf-8")
 
 # --- iOS izinleri
