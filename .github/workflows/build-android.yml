@@ -1,18 +1,23 @@
 name: Android APK
 
-# Her push'ta (ve Actions sekmesinden elle) Android APK derler.
+# main'e her push'ta (ve Actions sekmesinden elle) Android APK derler.
+# Derleme kaydı ve APK, "ci-output" dalına yazılır (her derlemede üzerine yazılır).
 on:
   push:
+    branches: [main]
   workflow_dispatch:
+
+permissions:
+  contents: write
 
 jobs:
   build:
-    runs-on: ubuntu-latest
-    timeout-minutes: 45
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
-      - uses: actions/setup-java@v4
+      - uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: '17'
@@ -38,11 +43,33 @@ jobs:
         run: flutter test
 
       - name: APK derle (arm64 — güncel Android telefonlar)
-        run: flutter build apk --release --target-platform android-arm64
+        id: build
+        continue-on-error: true
+        run: |
+          set -o pipefail
+          flutter build apk --release --target-platform android-arm64 2>&1 \
+            | grep --line-buffered -vE '^\[=* *\] *[0-9]+%' | tee build.log
 
-      - name: APK'yı yükle
-        uses: actions/upload-artifact@v4
-        with:
-          name: future-meeting-notes-apk
-          path: build/app/outputs/flutter-apk/app-release.apk
-          retention-days: 30
+      - name: Kaydı ve APK'yı ci-output dalına yaz
+        if: always()
+        run: |
+          mkdir -p /tmp/out
+          {
+            echo "commit: $GITHUB_SHA"
+            echo "build: ${{ steps.build.outcome }}"
+            echo "flutter: $(flutter --version | head -1)"
+          } > /tmp/out/STATUS.txt
+          [ -f build.log ] && tail -n 400 build.log > /tmp/out/build.log || true
+          [ -f build/app/outputs/flutter-apk/app-release.apk ] && \
+            cp build/app/outputs/flutter-apk/app-release.apk /tmp/out/future-meeting-notes.apk || true
+          cd /tmp/out
+          git init -q -b ci-output
+          git config user.name "github-actions"
+          git config user.email "github-actions@users.noreply.github.com"
+          git add -A
+          git commit -qm "CI çıktısı: $GITHUB_SHA (${{ steps.build.outcome }})"
+          git push -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}" ci-output
+
+      - name: Derleme başarısızsa işi başarısız say
+        if: steps.build.outcome == 'failure'
+        run: exit 1
