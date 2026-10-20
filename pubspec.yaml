@@ -1,0 +1,29 @@
+name: future_meeting_notes
+description: Yüz yüze toplantıları kişi bazında yazıya döken mobil uygulama.
+publish_to: 'none'
+version: 0.2.0+2
+
+environment:
+  sdk: ">=3.6.0 <4.0.0"
+  flutter: ">=3.27.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  provider: ^6.1.2
+  record: ^6.0.0
+  path_provider: ^2.1.4
+  path: ^1.9.0
+  shared_preferences: ^2.3.2
+  uuid: ^4.5.1
+  file_picker: ^8.1.2
+  wakelock_plus: ^1.2.8
+  sherpa_onnx: ^1.13.8
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^4.0.0
+
+flutter:
+  uses-material-design: true

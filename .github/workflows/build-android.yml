@@ -1,0 +1,48 @@
+name: Android APK
+
+# Her push'ta (ve Actions sekmesinden elle) Android APK derler.
+on:
+  push:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Platform klasörlerini oluştur
+        run: |
+          flutter create --org com.bicen --project-name future_meeting_notes --platforms android,ios .
+          rm -f test/widget_test.dart
+          python3 scripts/setup_platforms.py
+
+      - name: Paketler
+        run: flutter pub get
+
+      - name: Kod analizi
+        run: flutter analyze --no-fatal-infos --no-fatal-warnings
+
+      - name: Testler
+        run: flutter test
+
+      - name: APK derle (arm64 — güncel Android telefonlar)
+        run: flutter build apk --release --target-platform android-arm64
+
+      - name: APK'yı yükle
+        uses: actions/upload-artifact@v4
+        with:
+          name: future-meeting-notes-apk
+          path: build/app/outputs/flutter-apk/app-release.apk
+          retention-days: 30
