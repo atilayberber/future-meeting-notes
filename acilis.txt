@@ -1,0 +1,8 @@
+10-22 08:20:19.387 I/flutter ( 3509): [FMN] → Ayarlar yükleniyor
+10-22 08:20:20.944 I/flutter ( 3509): [FMN] ✓ Ayarlar yükleniyor
+10-22 08:20:20.944 I/flutter ( 3509): [FMN] → Depolama hazırlanıyor
+10-22 08:20:21.071 I/flutter ( 3509): [FMN] ✓ Depolama hazırlanıyor
+10-22 08:20:21.072 I/flutter ( 3509): [FMN] → Mikrofon servisi hazırlanıyor
+10-22 08:20:21.074 I/flutter ( 3509): [FMN] ✓ Mikrofon servisi hazırlanıyor
+10-22 08:20:21.074 I/flutter ( 3509): [FMN] → Konuşma tanıma modelleri kontrol ediliyor
+10-22 08:20:21.122 I/flutter ( 3509): [FMN] ✓ Konuşma tanıma modelleri kontrol ediliyor
