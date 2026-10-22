@@ -1,0 +1,83 @@
+name: Emülatör testi
+
+# APK'yı Android emülatöründe açar; ekran görüntüsü ve logcat'i "ci-emulator" dalına yazar.
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  emulator:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: KVM'yi aç
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Makinedeki NDK'yı seç
+        run: echo "ANDROID_NDK_VERSION=$(ls "$ANDROID_HOME/ndk" | sort -V | tail -1)" >> "$GITHUB_ENV"
+
+      - name: Platform klasörleri
+        run: |
+          flutter create --org com.bicen --project-name future_meeting_notes --platforms android,ios .
+          rm -f test/widget_test.dart
+          python3 scripts/setup_platforms.py
+          flutter pub get
+
+      - name: Emülatör için APK (x86_64)
+        run: flutter build apk --release --target-platform android-x64
+
+      - name: Emülatörde aç
+        id: run
+        continue-on-error: true
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          arch: x86_64
+          target: google_apis
+          force-avd-creation: false
+          emulator-options: -no-snapshot-save -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim
+          disable-animations: true
+          script: |
+            mkdir -p /tmp/out
+            adb install -r build/app/outputs/flutter-apk/app-release.apk
+            adb logcat -c
+            adb shell monkey -p com.bicen.future_meeting_notes -c android.intent.category.LAUNCHER 1
+            sleep 45
+            adb exec-out screencap -p > /tmp/out/ekran.png
+            adb logcat -d -v time > /tmp/out/logcat_tam.txt || true
+            (grep -iE "flutter|FMN|AndroidRuntime|FATAL|DEBUG.*signal|crash|future_meeting|libapp|sherpa|onnx|Exception|Error" /tmp/out/logcat_tam.txt | tail -n 400 > /tmp/out/logcat.txt) || true
+            adb shell pidof com.bicen.future_meeting_notes > /tmp/out/pid.txt || echo "çalışmıyor" > /tmp/out/pid.txt
+
+      - name: Sonuçları ci-emulator dalına yaz
+        if: always()
+        run: |
+          mkdir -p /tmp/out
+          echo "commit: $GITHUB_SHA" > /tmp/out/STATUS.txt
+          echo "run: ${{ steps.run.outcome }}" >> /tmp/out/STATUS.txt
+          tail -c 3000000 /tmp/out/logcat_tam.txt > /tmp/out/logcat_tam.tmp 2>/dev/null && mv /tmp/out/logcat_tam.tmp /tmp/out/logcat_tam.txt || true
+          cd /tmp/out
+          git init -q -b ci-emulator
+          git config user.name "github-actions"
+          git config user.email "github-actions@users.noreply.github.com"
+          git add -A
+          git commit -qm "Emülatör: $GITHUB_SHA"
+          git push -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}" ci-emulator
