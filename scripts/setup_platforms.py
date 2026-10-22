@@ -49,6 +49,30 @@ for name in ("android/app/build.gradle.kts", "android/app/build.gradle"):
             t = re.sub(r"ndkVersion\s+flutter\.ndkVersion", f'ndkVersion "{ndk}"', t)
         f.write_text(t, encoding="utf-8")
 
+# --- Sabit test imzası: her derleme aynı anahtarla imzalanır, böylece yeni APK
+# eskisinin üzerine (silmeden) kurulabilir. Anahtar: signing/key.properties
+kts = root / "android/app/build.gradle.kts"
+if (root / "signing/key.properties").exists() and kts.exists():
+    t = kts.read_text(encoding="utf-8")
+    if 'create("fmnTest")' not in t:
+        if "import java.util.Properties" not in t:
+            t = "import java.io.FileInputStream\nimport java.util.Properties\n\n" + t
+        block = (
+            "    signingConfigs {\n"
+            '        create("fmnTest") {\n'
+            '            val p = Properties().apply { load(FileInputStream(rootProject.file("../signing/key.properties"))) }\n'
+            '            storeFile = rootProject.file("../signing/" + p.getProperty("storeFile"))\n'
+            '            storePassword = p.getProperty("storePassword")\n'
+            '            keyAlias = p.getProperty("keyAlias")\n'
+            '            keyPassword = p.getProperty("keyPassword")\n'
+            "        }\n"
+            "    }\n\n"
+        )
+        t = re.sub(r"(\n\s*buildTypes\s*\{)", "\n" + block.rstrip("\n") + r"\1", t, count=1)
+        t = t.replace('signingConfig = signingConfigs.getByName("debug")',
+                      'signingConfig = signingConfigs.getByName("fmnTest")')
+        kts.write_text(t, encoding="utf-8")
+
 # --- Yedek önlem: küçültme ileride açılırsa eklenti sınıfları korunsun
 (root / "android/app/proguard-rules.pro").write_text(
     "-keep class io.flutter.plugins.** { *; }\n"

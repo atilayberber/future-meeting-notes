@@ -55,7 +55,7 @@ jobs:
         continue-on-error: true
         run: |
           set -o pipefail
-          flutter build apk --release --target-platform android-arm64 2>&1 \
+          flutter build apk --release --target-platform android-arm64 --build-number=$((100 + GITHUB_RUN_NUMBER)) 2>&1 \
             | grep --line-buffered -vE '^\[=* *\] *[0-9]+%' | tee build.log
 
       - name: Kaydı ve APK'yı ci-output dalına yaz
@@ -67,7 +67,10 @@ jobs:
             echo "build: ${{ steps.build.outcome }}"
             echo "flutter: $(flutter --version | head -1)"
             echo "ndk: $ANDROID_NDK_VERSION"
-            grep -n "ndkVersion\|minSdk\|Minify\|Shrink" android/app/build.gradle* || true
+            grep -n "ndkVersion\|minSdk\|Minify\|Shrink\|signingConfig =" android/app/build.gradle* || true
+            echo "build-number: $((100 + GITHUB_RUN_NUMBER))"
+            [ -f build/app/outputs/flutter-apk/app-release.apk ] && \
+              keytool -printcert -jarfile build/app/outputs/flutter-apk/app-release.apk | grep -E "Owner|SHA256:" || true
           } > /tmp/out/STATUS.txt
           [ -f build.log ] && tail -n 400 build.log > /tmp/out/build.log || true
           [ -f build/app/outputs/flutter-apk/app-release.apk ] && \
