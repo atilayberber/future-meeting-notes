@@ -30,6 +30,10 @@ foreach ($g in @('android/app/build.gradle.kts', 'android/app/build.gradle')) {
         $t = [IO.File]::ReadAllText($path)
         $t = $t -replace 'minSdk\s*=\s*flutter\.minSdkVersion', 'minSdk = 24'
         $t = $t -replace 'minSdkVersion\s+flutter\.minSdkVersion', 'minSdkVersion 24'
+        # Release'te R8 küçültmeyi kapat (eklenti metotlarını silip açılışı bozuyordu)
+        if ($t -notmatch 'inifyEnabled') {
+            $t = $t -replace '(signingConfig\s*=\s*signingConfigs\.getByName\("debug"\))', "`$1`n            isMinifyEnabled = false`n            isShrinkResources = false"
+        }
         [IO.File]::WriteAllText($path, $t)
     }
 }

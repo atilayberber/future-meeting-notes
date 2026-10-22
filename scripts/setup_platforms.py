@@ -30,10 +30,35 @@ for name in ("android/app/build.gradle.kts", "android/app/build.gradle"):
         t = f.read_text(encoding="utf-8")
         t = re.sub(r"minSdk\s*=\s*flutter\.minSdkVersion", "minSdk = 24", t)
         t = re.sub(r"minSdkVersion\s+flutter\.minSdkVersion", "minSdkVersion 24", t)
+        # Release'te R8 küçültmeyi kapat: eklentilerin JNI ile çağrılan metotlarını
+        # (ör. shared_preferences getAll) silip açılışta NoSuchMethodError'a yol açıyordu.
+        if "isMinifyEnabled" not in t and name.endswith(".kts"):
+            t = re.sub(
+                r'(signingConfig\s*=\s*signingConfigs\.getByName\("debug"\))',
+                r'\1\n            isMinifyEnabled = false\n            isShrinkResources = false',
+                t,
+            )
+        elif "minifyEnabled" not in t and not name.endswith(".kts"):
+            t = re.sub(
+                r"(signingConfig\s+signingConfigs\.debug)",
+                r"\1\n            minifyEnabled false\n            shrinkResources false",
+                t,
+            )
         if ndk:
             t = re.sub(r"ndkVersion\s*=\s*flutter\.ndkVersion", f'ndkVersion = "{ndk}"', t)
             t = re.sub(r"ndkVersion\s+flutter\.ndkVersion", f'ndkVersion "{ndk}"', t)
         f.write_text(t, encoding="utf-8")
+
+# --- Yedek önlem: küçültme ileride açılırsa eklenti sınıfları korunsun
+(root / "android/app/proguard-rules.pro").write_text(
+    "-keep class io.flutter.plugins.** { *; }\n"
+    "-keep class com.github.dart_lang.jni.** { *; }\n"
+    "-keep class dev.fluttercommunity.** { *; }\n"
+    "-keep class com.llfbandit.record.** { *; }\n"
+    "-keep class com.k2fsa.** { *; }\n"
+    "-keepclassmembers class * { @androidx.annotation.Keep *; }\n",
+    encoding="utf-8",
+)
 
 # --- iOS izinleri
 plist = root / "ios/Runner/Info.plist"

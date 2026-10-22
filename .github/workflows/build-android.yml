@@ -67,7 +67,7 @@ jobs:
             echo "build: ${{ steps.build.outcome }}"
             echo "flutter: $(flutter --version | head -1)"
             echo "ndk: $ANDROID_NDK_VERSION"
-            grep -n "ndkVersion\|minSdk" android/app/build.gradle* || true
+            grep -n "ndkVersion\|minSdk\|Minify\|Shrink" android/app/build.gradle* || true
           } > /tmp/out/STATUS.txt
           [ -f build.log ] && tail -n 400 build.log > /tmp/out/build.log || true
           [ -f build/app/outputs/flutter-apk/app-release.apk ] && \

@@ -66,6 +66,7 @@ jobs:
             adb logcat -d -v time > /tmp/out/logcat_tam.txt || true
             (grep -iE "flutter|FMN|AndroidRuntime|FATAL|DEBUG.*signal|crash|future_meeting|libapp|sherpa|onnx|Exception|Error" /tmp/out/logcat_tam.txt | tail -n 400 > /tmp/out/logcat.txt) || true
             adb shell pidof com.bicen.future_meeting_notes > /tmp/out/pid.txt || echo "çalışmıyor" > /tmp/out/pid.txt
+            (grep "\[FMN\]" /tmp/out/logcat_tam.txt > /tmp/out/acilis.txt) || echo "FMN kaydı yok" > /tmp/out/acilis.txt
 
       - name: Sonuçları ci-emulator dalına yaz
         if: always()
