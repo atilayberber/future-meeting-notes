@@ -1,0 +1,14 @@
+commit: a6bb46263dc39461f0c7adde666170b1d5cdcfd7
+platform: success
+pub: success
+analyze: success
+test: success
+build: success
+flutter: Flutter 3.47.9 • channel stable • https://github.com/flutter/flutter.git
+ndk: 30.0.16248370
+13:    ndkVersion = "30.0.16248370"
+25:        minSdk = 24
+48:            signingConfig = signingConfigs.getByName("fmnTest")
+49:            isMinifyEnabled = false
+50:            isShrinkResources = false
+build-number: 112

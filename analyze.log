@@ -1,0 +1,8 @@
+Analyzing future-meeting-notes...                               
+
+   info • The import of 'dart:typed_data' is unnecessary because all of the used elements are also provided by the import of 'package:flutter/foundation.dart'. Try removing the import directive • lib/asr/sherpa_transcription_service.dart:5:8 • unnecessary_import
+warning • The value of the field '_isolate' isn't used. Try removing the field, or using it • lib/asr/sherpa_transcription_service.dart:33:12 • unused_field
+   info • 'onReorder' is deprecated and shouldn't be used. Use the onReorderItem callback instead. The onReorderItem callback adjusts the newIndex parameter for a removed item at the oldIndex. This feature was deprecated after v3.41.0-0.0.pre. Try replacing the use of the deprecated member with the replacement • lib/screens/decisions_screen.dart:184:19 • deprecated_member_use
+   info • The import of 'dart:typed_data' is unnecessary because all of the used elements are also provided by the import of 'package:flutter/foundation.dart'. Try removing the import directive • lib/services/transcription_service.dart:1:8 • unnecessary_import
+
+4 issues found. (ran in 9.9s)

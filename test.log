@@ -1,0 +1,34 @@
+
+::group::✅ Passing tests
+✅ /home/runner/work/future-meeting-notes/future-meeting-notes/test/text_cleaner_test.dart: TextCleaner Bilinen Whisper uydurmaları atılır
+✅ /home/runner/work/future-meeting-notes/future-meeting-notes/test/text_cleaner_test.dart: TextCleaner Gerçek konuşma korunur, eklenen uydurma çıkarılır
+✅ /home/runner/work/future-meeting-notes/future-meeting-notes/test/text_cleaner_test.dart: TextCleaner Tekrar döngüsü kısaltılır
+✅ /home/runner/work/future-meeting-notes/future-meeting-notes/test/text_cleaner_test.dart: WAV Başlık 16 kHz mono 16-bit
+✅ /home/runner/work/future-meeting-notes/future-meeting-notes/test/text_cleaner_test.dart: WAV PCM16 → float dönüşümü
+✅ /home/runner/work/future-meeting-notes/future-meeting-notes/test/recco_features_test.dart: Arama Türkçe karakter ve büyük/küçük harf farkı gözetmez
+✅ /home/runner/work/future-meeting-notes/future-meeting-notes/test/recco_features_test.dart: Arama Konuşmacı adıyla ve konuşmacı filtresiyle arar
+✅ /home/runner/work/future-meeting-notes/future-meeting-notes/test/recco_features_test.dart: Arama Tüm toplantılarda arama
+✅ /home/runner/work/future-meeting-notes/future-meeting-notes/test/recco_features_test.dart: Arama Vurgulanacak aralıklar orijinal metindeki konumlardır
+✅ /home/runner/work/future-meeting-notes/future-meeting-notes/test/recco_features_test.dart: Rapor Kişi başı konuşma süresi
+✅ /home/runner/work/future-meeting-notes/future-meeting-notes/test/recco_features_test.dart: Rapor İşaret, o anda söylenen cümleyle eşleşir
+✅ /home/runner/work/future-meeting-notes/future-meeting-notes/test/recco_features_test.dart: Rapor Takip e-postası alıcıları, kararları ve işaretleri içerir
+✅ /home/runner/work/future-meeting-notes/future-meeting-notes/test/recco_features_test.dart: Rapor Markdown notu
+✅ /home/runner/work/future-meeting-notes/future-meeting-notes/test/recco_features_test.dart: Kayıt biçimi Tür, işaretler ve özet JSON gidiş-dönüşünde korunur
+✅ /home/runner/work/future-meeting-notes/future-meeting-notes/test/recco_features_test.dart: Kayıt biçimi Eski kayıtlar (tür/işaret alanı yok) açılır
+✅ /home/runner/work/future-meeting-notes/future-meeting-notes/test/recco_features_test.dart: Faz 2 zemini Komut türü, odağı, işaretleri ve metni içerir
+✅ /home/runner/work/future-meeting-notes/future-meeting-notes/test/recco_features_test.dart: Faz 2 zemini Uzun metin satır bölünmeden parçalanır
+✅ /home/runner/work/future-meeting-notes/future-meeting-notes/test/recco_features_test.dart: Faz 2 zemini Kod bloğu ve fazladan virgül içeren model çıktısı okunur
+✅ /home/runner/work/future-meeting-notes/future-meeting-notes/test/recco_features_test.dart: Faz 2 zemini JSON yoksa anlaşılır hata
+✅ /home/runner/work/future-meeting-notes/future-meeting-notes/test/recco_features_test.dart: Faz 2 zemini Belirsiz ad eşleştirilmez
+✅ /home/runner/work/future-meeting-notes/future-meeting-notes/test/recco_features_test.dart: Faz 2 zemini Parça sonuçları tekrarsız birleştirilir
+✅ /home/runner/work/future-meeting-notes/future-meeting-notes/test/email_parser_test.dart: EmailParser Türkçe sesli söyleniş
+✅ /home/runner/work/future-meeting-notes/future-meeting-notes/test/email_parser_test.dart: EmailParser Whisper hazır adres yazdıysa ve sonda nokta varsa
+✅ /home/runner/work/future-meeting-notes/future-meeting-notes/test/email_parser_test.dart: EmailParser İngilizce söyleniş ve dolgu kelimesi
+✅ /home/runner/work/future-meeting-notes/future-meeting-notes/test/email_parser_test.dart: EmailParser Varsayılan şirket alan adı eklenir
+✅ /home/runner/work/future-meeting-notes/future-meeting-notes/test/email_parser_test.dart: EmailParser Alt çizgi, tire ve kuyruklu a
+✅ /home/runner/work/future-meeting-notes/future-meeting-notes/test/email_parser_test.dart: EmailParser Büyük İ harfi doğru küçülür
+✅ /home/runner/work/future-meeting-notes/future-meeting-notes/test/email_parser_test.dart: EmailParser Ayırıcı söylenmediyse birden fazla aday döner
+✅ /home/runner/work/future-meeting-notes/future-meeting-notes/test/email_parser_test.dart: EmailParser Adres yoksa null
+::endgroup::
+
+🎉 29 tests passed.
