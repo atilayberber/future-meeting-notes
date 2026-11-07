@@ -36,14 +36,20 @@ jobs:
           echo "ANDROID_NDK_VERSION=$NDK" >> "$GITHUB_ENV"
 
       - name: Platform klasörlerini oluştur
+        id: platform
+        continue-on-error: true
         run: |
-          flutter create --org com.bicen --project-name future_meeting_notes --platforms android,ios .
-          rm -f test/widget_test.dart
-          python3 scripts/setup_platforms.py
-          grep -n "ndkVersion\|minSdk" android/app/build.gradle* || true
+          set -o pipefail
+          {
+            flutter create --org com.bicen --project-name future_meeting_notes --platforms android,ios . &&
+            rm -f test/widget_test.dart &&
+            python3 scripts/setup_platforms.py &&
+            { grep -n "ndkVersion\|minSdk" android/app/build.gradle* || true; }
+          } 2>&1 | tee platform.log
 
       - name: Paketler
         id: pub
+        if: steps.platform.outcome == 'success'
         continue-on-error: true
         run: |
           set -o pipefail
@@ -80,6 +86,7 @@ jobs:
           mkdir -p /tmp/out
           {
             echo "commit: $GITHUB_SHA"
+            echo "platform: ${{ steps.platform.outcome }}"
             echo "pub: ${{ steps.pub.outcome }}"
             echo "analyze: ${{ steps.analyze.outcome }}"
             echo "test: ${{ steps.test.outcome }}"
@@ -92,7 +99,7 @@ jobs:
               keytool -printcert -jarfile build/app/outputs/flutter-apk/app-release.apk | grep -E "Owner|SHA256:" || true
           } > /tmp/out/STATUS.txt
           [ -f build.log ] && tail -n 400 build.log > /tmp/out/build.log || true
-          for f in pub.log analyze.log test.log; do [ -f $f ] && tail -n 300 $f > /tmp/out/$f || true; done
+          for f in platform.log pub.log analyze.log test.log; do [ -f $f ] && tail -n 300 $f > /tmp/out/$f || true; done
           [ -f build/app/outputs/flutter-apk/app-release.apk ] && \
             cp build/app/outputs/flutter-apk/app-release.apk /tmp/out/future-meeting-notes.apk || true
           cd /tmp/out
@@ -106,5 +113,5 @@ jobs:
           git push -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}" "$OUT_BRANCH"
 
       - name: Bir adım başarısızsa işi başarısız say
-        if: steps.pub.outcome != 'success' || steps.analyze.outcome != 'success' || steps.test.outcome != 'success' || steps.build.outcome != 'success'
+        if: steps.platform.outcome != 'success' || steps.pub.outcome != 'success' || steps.analyze.outcome != 'success' || steps.test.outcome != 'success' || steps.build.outcome != 'success'
         run: exit 1
