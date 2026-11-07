@@ -20,6 +20,16 @@ if perms:
     xml = re.sub(r"(<manifest[^>]*>)", lambda m: m.group(1) + perms, xml, count=1)
     manifest.write_text(xml, encoding="utf-8")
 
+# --- Takip e-postası: Android 11+ e-posta uygulamasını bulabilsin (mailto)
+xml = manifest.read_text(encoding="utf-8")
+if 'android:scheme="mailto"' not in xml:
+    q = ('\n    <queries>\n        <intent>\n'
+         '            <action android:name="android.intent.action.SENDTO"/>\n'
+         '            <data android:scheme="mailto"/>\n'
+         '        </intent>\n    </queries>')
+    xml = re.sub(r"(\n\s*<application)", lambda m: q + m.group(1), xml, count=1)
+    manifest.write_text(xml, encoding="utf-8")
+
 # --- Android minSdk 24 (+ isteğe bağlı sabit NDK sürümü)
 # ANDROID_NDK_VERSION verilirse (CI'da makinede kurulu olan sürüm) o kullanılır;
 # böylece Gradle derleme sırasında NDK indirmeye çalışmaz.

@@ -2,9 +2,10 @@ name: Android APK
 
 # main'e her push'ta (ve Actions sekmesinden elle) Android APK derler.
 # Derleme kaydı ve APK, "ci-output" dalına yazılır (her derlemede üzerine yazılır).
+# "faz-*" dallarının çıktısı main'inkini ezmesin diye "ci-output-<dal>" dalına yazılır.
 on:
   push:
-    branches: [main]
+    branches: [main, 'faz-*']
   workflow_dispatch:
 
 permissions:
@@ -42,16 +43,31 @@ jobs:
           grep -n "ndkVersion\|minSdk" android/app/build.gradle* || true
 
       - name: Paketler
-        run: flutter pub get
+        id: pub
+        continue-on-error: true
+        run: |
+          set -o pipefail
+          flutter pub get 2>&1 | tee pub.log
 
       - name: Kod analizi
-        run: flutter analyze --no-fatal-infos --no-fatal-warnings
+        id: analyze
+        if: steps.pub.outcome == 'success'
+        continue-on-error: true
+        run: |
+          set -o pipefail
+          flutter analyze --no-fatal-infos --no-fatal-warnings 2>&1 | tee analyze.log
 
       - name: Testler
-        run: flutter test
+        id: test
+        if: steps.pub.outcome == 'success'
+        continue-on-error: true
+        run: |
+          set -o pipefail
+          flutter test 2>&1 | tee test.log
 
       - name: APK derle (arm64 — güncel Android telefonlar)
         id: build
+        if: steps.analyze.outcome == 'success' && steps.test.outcome == 'success'
         continue-on-error: true
         run: |
           set -o pipefail
@@ -64,6 +80,9 @@ jobs:
           mkdir -p /tmp/out
           {
             echo "commit: $GITHUB_SHA"
+            echo "pub: ${{ steps.pub.outcome }}"
+            echo "analyze: ${{ steps.analyze.outcome }}"
+            echo "test: ${{ steps.test.outcome }}"
             echo "build: ${{ steps.build.outcome }}"
             echo "flutter: $(flutter --version | head -1)"
             echo "ndk: $ANDROID_NDK_VERSION"
@@ -73,16 +92,19 @@ jobs:
               keytool -printcert -jarfile build/app/outputs/flutter-apk/app-release.apk | grep -E "Owner|SHA256:" || true
           } > /tmp/out/STATUS.txt
           [ -f build.log ] && tail -n 400 build.log > /tmp/out/build.log || true
+          for f in pub.log analyze.log test.log; do [ -f $f ] && tail -n 300 $f > /tmp/out/$f || true; done
           [ -f build/app/outputs/flutter-apk/app-release.apk ] && \
             cp build/app/outputs/flutter-apk/app-release.apk /tmp/out/future-meeting-notes.apk || true
           cd /tmp/out
-          git init -q -b ci-output
+          OUT_BRANCH=ci-output
+          [ "$GITHUB_REF_NAME" != "main" ] && OUT_BRANCH="ci-output-$GITHUB_REF_NAME"
+          git init -q -b "$OUT_BRANCH"
           git config user.name "github-actions"
           git config user.email "github-actions@users.noreply.github.com"
           git add -A
           git commit -qm "CI çıktısı: $GITHUB_SHA (${{ steps.build.outcome }})"
-          git push -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}" ci-output
+          git push -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}" "$OUT_BRANCH"
 
-      - name: Derleme başarısızsa işi başarısız say
-        if: steps.build.outcome == 'failure'
+      - name: Bir adım başarısızsa işi başarısız say
+        if: steps.pub.outcome != 'success' || steps.analyze.outcome != 'success' || steps.test.outcome != 'success' || steps.build.outcome != 'success'
         run: exit 1

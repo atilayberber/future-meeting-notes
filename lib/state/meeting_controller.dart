@@ -7,6 +7,8 @@ import 'package:wakelock_plus/wakelock_plus.dart';
 
 import '../models/decision_item.dart';
 import '../models/meeting.dart';
+import '../models/meeting_mark.dart';
+import '../models/meeting_type.dart';
 import '../models/participant.dart';
 import '../models/transcript_segment.dart';
 import '../services/audio_recorder_service.dart';
@@ -79,6 +81,11 @@ class MeetingController extends ChangeNotifier {
 
   void setTitle(String title) {
     _meeting?.title = title;
+  }
+
+  void setType(MeetingType type) {
+    _meeting?.type = type;
+    notifyListeners();
   }
 
   Future<void> addParticipant(Participant participant) async {
@@ -188,6 +195,56 @@ class MeetingController extends ChangeNotifier {
         s.speakerConfidence = null;
       }
     }
+    notifyListeners();
+    await storage.saveMeeting(m);
+    await storage.writeTranscriptText(m);
+  }
+
+  /// Bir konuşma parçasının metnini elle düzeltir (Whisper hataları için).
+  Future<void> editSegmentText(Meeting m, String segmentId, String text) async {
+    final trimmed = text.trim();
+    if (trimmed.isEmpty) return;
+    for (final s in m.segments) {
+      if (s.id == segmentId) s.text = trimmed;
+    }
+    notifyListeners();
+    await storage.saveMeeting(m);
+    await storage.writeTranscriptText(m);
+  }
+
+  // ------------------------------------------------------ Kayıt sırasında işaret
+
+  /// Kayıt sürerken o anı işaretler (önemli, karar, görev, soru, not).
+  /// [at] verilmezse kaydın şu anki saniyesi kullanılır.
+  MeetingMark? addMark(MarkKind kind, {String note = '', Duration? at}) {
+    final m = _meeting;
+    if (m == null) return null;
+    final mark = MeetingMark(id: _uuid.v4(), at: at ?? elapsed, kind: kind, note: note.trim());
+    m.marks.add(mark);
+    notifyListeners();
+    unawaited(storage.saveMeeting(m));
+    return mark;
+  }
+
+  Future<void> updateMark(Meeting m, String markId, {MarkKind? kind, String? note}) async {
+    for (final k in m.marks) {
+      if (k.id == markId) {
+        if (kind != null) k.kind = kind;
+        if (note != null) k.note = note.trim();
+      }
+    }
+    notifyListeners();
+    await storage.saveMeeting(m);
+  }
+
+  Future<void> removeMark(Meeting m, String markId) async {
+    m.marks.removeWhere((k) => k.id == markId);
+    notifyListeners();
+    await storage.saveMeeting(m);
+  }
+
+  /// Toplantıyı kaydeder (geçmişten açılan toplantılarda yapılan değişiklikler için).
+  Future<void> save(Meeting m) async {
     notifyListeners();
     await storage.saveMeeting(m);
     await storage.writeTranscriptText(m);

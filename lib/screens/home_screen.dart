@@ -8,6 +8,7 @@ import '../utils/format.dart';
 import '../widgets/common.dart';
 import 'preparation_screen.dart';
 import 'result_screen.dart';
+import 'search_screen.dart';
 import 'settings_screen.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -53,6 +54,13 @@ class _HomeScreenState extends State<HomeScreen> {
       appBar: AppBar(
         title: const Text('Future Meeting Notes'),
         actions: [
+          IconButton(
+            tooltip: 'Tüm toplantılarda ara',
+            icon: const Icon(Icons.search),
+            onPressed: () => Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => const SearchScreen()),
+            ),
+          ),
           IconButton(
             tooltip: 'Ayarlar',
             icon: const Icon(Icons.settings_outlined),
@@ -110,7 +118,8 @@ class _HomeScreenState extends State<HomeScreen> {
                           subtitle: Text(
                             '${formatDateTime(m.startedAt ?? m.createdAt)} · '
                             '${formatDuration(m.duration)} · '
-                            '${m.participants.length} katılımcı',
+                            '${m.participants.length} katılımcı · ${m.type.label}'
+                            '${m.marks.isEmpty ? '' : ' · ${m.marks.length} işaret'}',
                           ),
                           trailing: const Icon(Icons.chevron_right),
                           onTap: () => Navigator.of(context).push(

@@ -6,6 +6,7 @@ import 'package:path_provider/path_provider.dart';
 
 import '../models/meeting.dart';
 import '../utils/format.dart';
+import 'meeting_report.dart';
 import 'settings_service.dart';
 
 /// Toplantıların cihazda saklanması.
@@ -80,6 +81,14 @@ class StorageService {
       final who = m.participantById(s.speakerId)?.fullName ?? 'Bilinmeyen';
       b.writeln('[${formatDuration(s.start)}] $who: ${s.text}');
     }
+    if (m.marks.isNotEmpty) {
+      b
+        ..writeln()
+        ..writeln('İŞARETLENEN ANLAR');
+      for (final k in [...m.marks]..sort((a, c) => a.at.compareTo(c.at))) {
+        b.writeln('- ${markLine(m, k)}');
+      }
+    }
     if (m.decisions.isNotEmpty) {
       b
         ..writeln()
@@ -89,6 +98,18 @@ class StorageService {
       }
     }
     await File(p.join(folder, fileName)).writeAsString(b.toString(), flush: true);
+  }
+
+  /// Paylaşmak için Markdown toplantı notu yazar ve dosya yolunu döndürür.
+  Future<String?> writeMarkdown(Meeting m, {bool includeTranscript = true}) async {
+    final folder = m.folderPath;
+    if (folder == null) return null;
+    final path = p.join(folder, 'toplanti_notlari.md');
+    await File(path).writeAsString(
+      meetingToMarkdown(m, includeTranscript: includeTranscript),
+      flush: true,
+    );
+    return path;
   }
 
   Future<List<Meeting>> listMeetings() async {

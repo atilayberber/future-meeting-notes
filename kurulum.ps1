@@ -22,6 +22,13 @@ if ($perms -ne '') {
     $xml = [regex]::Replace($xml, '(<manifest[^>]*>)', '$1' + $perms, 1)
     [IO.File]::WriteAllText($manifest, $xml)
 }
+# Takip e-postası: Android 11+ e-posta uygulamasını bulabilsin (mailto)
+$xml = [IO.File]::ReadAllText($manifest)
+if ($xml -notmatch 'android:scheme="mailto"') {
+    $q = "`n    <queries>`n        <intent>`n            <action android:name=""android.intent.action.SENDTO""/>`n            <data android:scheme=""mailto""/>`n        </intent>`n    </queries>"
+    $xml = [regex]::Replace($xml, '(\r?\n\s*<application)', $q + '$1', 1)
+    [IO.File]::WriteAllText($manifest, $xml)
+}
 
 # Android minSdk 24
 foreach ($g in @('android/app/build.gradle.kts', 'android/app/build.gradle')) {

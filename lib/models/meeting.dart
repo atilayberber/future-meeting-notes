@@ -1,4 +1,7 @@
+import '../intelligence/meeting_insights.dart';
 import 'decision_item.dart';
+import 'meeting_mark.dart';
+import 'meeting_type.dart';
 import 'participant.dart';
 import 'transcript_segment.dart';
 
@@ -31,6 +34,9 @@ class Meeting {
     List<Participant>? participants,
     List<TranscriptSegment>? segments,
     List<DecisionItem>? decisions,
+    List<MeetingMark>? marks,
+    this.type = MeetingType.general,
+    this.insights,
     this.phase = MeetingPhase.preparation,
     this.startedAt,
     this.endedAt,
@@ -40,7 +46,8 @@ class Meeting {
     this.exportPath,
   })  : participants = participants ?? [],
         segments = segments ?? [],
-        decisions = decisions ?? [];
+        decisions = decisions ?? [],
+        marks = marks ?? [];
 
   final String id;
   String title;
@@ -52,6 +59,15 @@ class Meeting {
   final List<Participant> participants;
   final List<TranscriptSegment> segments;
   final List<DecisionItem> decisions;
+
+  /// Kayıt sırasında işaretlenen anlar (önemli, karar, görev…).
+  final List<MeetingMark> marks;
+
+  /// Toplantı türü; özetin neye odaklanacağını belirler.
+  MeetingType type;
+
+  /// Faz 2: yapay zekâ özeti ve çıkarılan kararlar (henüz üretilmediyse null).
+  MeetingInsights? insights;
 
   /// Toplantının ses kaydı (16 kHz mono WAV).
   String? audioPath;
@@ -77,6 +93,19 @@ class Meeting {
     return null;
   }
 
+  /// [at] anında konuşulan (yoksa hemen öncesindeki) konuşma parçası.
+  TranscriptSegment? segmentAt(Duration at) {
+    TranscriptSegment? best;
+    for (final s in segments) {
+      if (s.start <= at) {
+        best = s;
+      } else {
+        break;
+      }
+    }
+    return best;
+  }
+
   int participantIndex(String? id) =>
       id == null ? -1 : participants.indexWhere((p) => p.id == id);
 
@@ -87,6 +116,7 @@ class Meeting {
         'startedAt': startedAt?.toIso8601String(),
         'endedAt': endedAt?.toIso8601String(),
         'phase': phase.name,
+        'type': type.name,
         'audioPath': audioPath,
         'decisionsAudioPath': decisionsAudioPath,
         'folderPath': folderPath,
@@ -94,6 +124,8 @@ class Meeting {
         'participants': participants.map((p) => p.toJson()).toList(),
         'segments': segments.map((s) => s.toJson()).toList(),
         'decisions': decisions.map((d) => d.toJson()).toList(),
+        'marks': marks.map((m) => m.toJson()).toList(),
+        if (insights != null) 'insights': insights!.toJson(),
       };
 
   factory Meeting.fromJson(Map<String, dynamic> j) {
@@ -115,6 +147,11 @@ class Meeting {
       participants: list(j['participants']).map(Participant.fromJson).toList(),
       segments: list(j['segments']).map(TranscriptSegment.fromJson).toList(),
       decisions: list(j['decisions']).map(DecisionItem.fromJson).toList(),
+      marks: list(j['marks']).map(MeetingMark.fromJson).toList(),
+      type: MeetingType.fromName(j['type']),
+      insights: j['insights'] is Map<String, dynamic>
+          ? MeetingInsights.fromJson(j['insights'] as Map<String, dynamic>)
+          : null,
     );
   }
 }

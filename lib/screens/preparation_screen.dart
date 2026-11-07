@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../models/meeting.dart';
+import '../models/meeting_type.dart';
 import '../models/participant.dart';
 import '../state/meeting_controller.dart';
 import '../widgets/common.dart';
@@ -35,6 +36,24 @@ class PreparationScreen extends StatelessWidget {
               border: OutlineInputBorder(),
             ),
             onChanged: c.setTitle,
+          ),
+          const SizedBox(height: 16),
+          DropdownButtonFormField<MeetingType>(
+            initialValue: m.type,
+            isExpanded: true,
+            decoration: const InputDecoration(
+              labelText: 'Toplantı türü',
+              helperText: 'Özet ve karar çıkarma bu türe göre yapılır.',
+              border: OutlineInputBorder(),
+            ),
+            items: [
+              for (final t in MeetingType.values)
+                DropdownMenuItem(
+                  value: t,
+                  child: Text('${t.label} — ${t.hint}', overflow: TextOverflow.ellipsis),
+                ),
+            ],
+            onChanged: ready ? null : (t) => t == null ? null : c.setType(t),
           ),
           const SizedBox(height: 24),
           Row(

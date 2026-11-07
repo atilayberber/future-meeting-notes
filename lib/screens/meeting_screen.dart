@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../models/meeting_mark.dart';
 import '../state/meeting_controller.dart';
 import '../utils/format.dart';
 import '../widgets/common.dart';
+import '../widgets/marks.dart';
 import '../widgets/transcript_tile.dart';
 import 'decisions_screen.dart';
 
@@ -107,6 +109,8 @@ class _MeetingScreenState extends State<MeetingScreen> {
                           SpeakerChip(participant: m.participants[i], index: i),
                     ),
                   ),
+                  const SizedBox(height: 10),
+                  MarkBar(controller: c),
                 ],
               ),
             ),
@@ -147,6 +151,87 @@ class _MeetingScreenState extends State<MeetingScreen> {
           ),
         ),
       ),
+    );
+  }
+}
+
+/// Kayıt sırasında tek dokunuşla anı işaretleme (Recco: "kayıt sırasında not").
+class MarkBar extends StatelessWidget {
+  const MarkBar({super.key, required this.controller});
+  final MeetingController controller;
+
+  static const _quick = [MarkKind.important, MarkKind.decision, MarkKind.task, MarkKind.question];
+
+  Future<void> _mark(BuildContext context, MarkKind kind, {bool askNote = false}) async {
+    final messenger = ScaffoldMessenger.of(context);
+    // Zamanı not yazılmadan önce al: işaret, düğmeye basılan ana ait olsun.
+    final at = controller.elapsed;
+    var note = '';
+    if (askNote) {
+      final text = await showMarkNoteDialog(context, kind: kind);
+      if (text == null) return;
+      note = text;
+    }
+    final mark = controller.addMark(kind, note: note, at: at);
+    if (mark == null) return;
+    messenger
+      ..hideCurrentSnackBar()
+      ..showSnackBar(SnackBar(
+        duration: const Duration(seconds: 3),
+        content: Text('${kind.label} işaretlendi (${formatDuration(at)})'),
+        action: askNote
+            ? null
+            : SnackBarAction(
+                label: 'Not ekle',
+                onPressed: () async {
+                  final m = controller.meeting;
+                  if (m == null || !context.mounted) return;
+                  final text = await showMarkNoteDialog(context, kind: kind);
+                  if (text != null) await controller.updateMark(m, mark.id, note: text);
+                },
+              ),
+      ));
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final count = controller.meeting?.marks.length ?? 0;
+    return Row(
+      children: [
+        Expanded(
+          child: SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              children: [
+                for (final k in _quick) ...[
+                  ActionChip(
+                    avatar: Icon(markIcon(k), size: 18),
+                    label: Text(k.label),
+                    onPressed: () => _mark(context, k),
+                  ),
+                  const SizedBox(width: 6),
+                ],
+                ActionChip(
+                  avatar: const Icon(Icons.edit_note, size: 18),
+                  label: const Text('Not'),
+                  onPressed: () => _mark(context, MarkKind.note, askNote: true),
+                ),
+              ],
+            ),
+          ),
+        ),
+        if (count > 0)
+          Padding(
+            padding: const EdgeInsets.only(left: 8),
+            child: Tooltip(
+              message: '$count işaret',
+              child: Badge(
+                label: Text('$count'),
+                child: const Icon(Icons.bookmark_outline),
+              ),
+            ),
+          ),
+      ],
     );
   }
 }
